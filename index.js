@@ -31,15 +31,37 @@ var listener = app.listen(process.env.PORT || 3000, function () {
 });
 //-----------------------------------------------------------------------------------------
 
-app.get("/api/:date/", function (req, res) {
+app.get("/api/:date?/", function (req, res) {
+  const dateParam = req.params.date;
+
+  // Handle empty date parameter, return the current time
+  if (!dateParam) {
+    const currentDate = new Date();
+    return res.json({
+      unix: currentDate.getTime(),
+      utc: currentDate.toUTCString()
+    });
+  }
+
   let date;
-  if (req.params.date.includes("-")){
-    date = new Date(req.params.date);
+
+  // Check if the input is a valid Unix timestamp (number or string of digits)
+  if (/^\d+$/.test(dateParam)) {
+    // Convert to number and create a Date object
+    date = new Date(parseInt(dateParam));
   } else {
-    date = new Date(parseInt(req.params.date));
-  }  
-  console.log(req.params.date)
+    // Otherwise, treat it as a standard date string
+    date = new Date(dateParam);
+  }
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    return res.json({ error: "Invalid Date" });
+  }
+
+  // Return the formatted date results
   const unixResult = date.getTime();
   const utcResult = date.toUTCString();
-  res.json({"unix": unixResult, "utc": utcResult});
+  res.json({ unix: unixResult, utc: utcResult });
 });
+
